@@ -1,23 +1,25 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const hamburger = document.getElementById('hamburger');
-  const navLinks = document.getElementById('nav-links');
-  const navbar = document.getElementById('navbar');
+  const toggle = document.getElementById('navToggle');
+  const menu = document.getElementById('navMenu');
+  const nav = document.getElementById('nav');
 
-  hamburger?.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    navLinks.classList.toggle('open');
+  toggle?.addEventListener('click', () => {
+    toggle.classList.toggle('active');
+    menu.classList.toggle('open');
+    document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : '';
   });
 
-  document.querySelectorAll('.nav-links a').forEach(link => {
+  document.querySelectorAll('.nav__links a, .nav__cta').forEach(link => {
     link.addEventListener('click', () => {
-      hamburger?.classList.remove('active');
-      navLinks?.classList.remove('open');
+      toggle?.classList.remove('active');
+      menu?.classList.remove('open');
+      document.body.style.overflow = '';
     });
   });
 
   window.addEventListener('scroll', () => {
-    navbar?.classList.toggle('scrolled', window.scrollY > 20);
-  });
+    nav?.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -26,16 +28,44 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  }, { threshold: 0.08, rootMargin: '0px 0px -60px 0px' });
 
-  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  document.querySelectorAll('.faq-question').forEach(btn => {
+  // Counter animation
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = parseFloat(el.dataset.count);
+        const isDecimal = target % 1 !== 0;
+        const duration = 2000;
+        const start = performance.now();
+
+        function tick(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 4);
+          const current = eased * target;
+          el.textContent = isDecimal ? current.toFixed(1) : Math.floor(current).toLocaleString();
+          if (progress < 1) requestAnimationFrame(tick);
+          else el.textContent = isDecimal ? target.toFixed(1) : target.toLocaleString();
+        }
+        requestAnimationFrame(tick);
+        counterObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(el));
+
+  // FAQ accordion
+  document.querySelectorAll('.faq__question').forEach(btn => {
     btn.addEventListener('click', () => {
-      const item = btn.parentElement;
-      const wasOpen = item.classList.contains('open');
-      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
-      if (!wasOpen) item.classList.add('open');
+      const faq = btn.parentElement;
+      const wasOpen = faq.classList.contains('open');
+      document.querySelectorAll('.faq.open').forEach(f => f.classList.remove('open'));
+      if (!wasOpen) faq.classList.add('open');
     });
   });
 });
